@@ -1,0 +1,8 @@
+server:
+  port: 8000
+postgresql:
+  UserName: "user"
+  Password: "12345678"
+  Address: "127.0.0.1"
+  Port: "5432"
+  DbName: "NORSI-TRANS"
