@@ -5,6 +5,7 @@ import (
 	"NORSI-TRANS/models"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -37,11 +38,11 @@ func NewNotionPostgresRepo(connection *pgx.Conn, notionTableName string) (Notion
 }
 
 func (n *notionPostgres) InsertNotion(ctx context.Context, notion models.Notion) (int64, error) {
-	sqlStatement := "INSERT INTO " + n.notionTableName + "(UserID, Notion) Values($1, $2) RETURNING notionId"
+	sqlStatement := fmt.Sprintf("INSERT INTO %s (UserID, Notion) Values($1, $2) RETURNING notionId", n.notionTableName)
 
 	var id int64
 	if err := n.connection.QueryRow(ctx, sqlStatement, notion.UserId, notion.Information).Scan(&id); err != nil {
-		return id, err
+		return id, appErrors.ErrBaseApp.Wrap(err, "insert notion failed")
 	}
 
 	return id, nil
@@ -50,20 +51,20 @@ func (n *notionPostgres) InsertNotion(ctx context.Context, notion models.Notion)
 func (n *notionPostgres) GetNotion(ctx context.Context, id int64) (models.Notion, error) {
 	notion := models.Notion{}
 
-	sqlStatement := "SELECT * FROM " + n.notionTableName + " WHERE notionId = $1"
+	sqlStatement := fmt.Sprintf("SELECT * FROM %s WHERE notionId = $1", n.notionTableName)
 	if err := n.connection.QueryRow(ctx, sqlStatement, id).Scan(&notion.Id, &notion.UserId, &notion.Information); errors.Is(err, pgx.ErrNoRows) {
 		return notion, appErrors.ErrNotFound
 	} else if err != nil {
-		return notion, err
+		return notion, appErrors.ErrBaseApp.Wrap(err, "get notion failed")
 	}
 
 	return notion, nil
 }
 
 func (n *notionPostgres) DeleteNotion(ctx context.Context, id int64) error {
-	sqlStatement := "DELETE FROM " + n.notionTableName + " WHERE notionId = $1"
+	sqlStatement := fmt.Sprintf("DELETE FROM %s WHERE notionId = $1", n.notionTableName)
 	if _, err := n.connection.Exec(ctx, sqlStatement, id); err != nil {
-		return err
+		return appErrors.ErrBaseApp.Wrap(err, "delete notion failed")
 	}
 
 	return nil
@@ -72,10 +73,10 @@ func (n *notionPostgres) DeleteNotion(ctx context.Context, id int64) error {
 func (n *notionPostgres) GetUserNotions(ctx context.Context, userId int64) ([]models.Notion, error) {
 	results := make([]models.Notion, 0)
 
-	sqlStatement := "SELECT * FROM " + n.notionTableName + " WHERE userId = $1"
+	sqlStatement := fmt.Sprintf("SELECT * FROM %s WHERE userId = $1", n.notionTableName)
 	rows, err := n.connection.Query(ctx, sqlStatement, userId)
 	if err != nil {
-		return results, err
+		return results, appErrors.ErrBaseApp.Wrap(err, "get notions failed")
 	}
 
 	for rows.Next() {

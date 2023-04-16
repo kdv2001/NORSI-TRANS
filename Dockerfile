@@ -19,9 +19,6 @@ COPY config.yaml /tmp/go
 ARG goreleaser_flags
 RUN make build
 
-FROM scratch AS export
-COPY --from=builder /tmp/go/dist .
-
 FROM alpine:3.17
 COPY --from=builder /tmp/go/NORSI-TRANS /tmp/go/NORSI-TRANS
 COPY --from=builder /tmp/go/config.yaml .
@@ -29,4 +26,4 @@ COPY --from=builder /tmp/go/swagger/doc.json /app/swagger/doc.json
 RUN apk update
 WORKDIR .
 CMD ["/tmp/go/NORSI-TRANS"]
-EXPOSE 8888
+EXPOSE 8000

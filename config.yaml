@@ -3,6 +3,6 @@ server:
 postgresql:
   UserName: "user"
   Password: "12345678"
-  Address: "127.0.0.1"
+  Address: "db"
   Port: "5432"
   DbName: "NORSI-TRANS"
